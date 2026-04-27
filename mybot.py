@@ -1,47 +1,45 @@
 
-import asyncio
+import os
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import InlineQuery, InlineQueryResultCachedVoice
+from aiogram.utils import executor
+from aiogram.types import InlineQuery, InlineQueryResultVoice
 
-# ВСТАВ СВІЙ ТОКЕН ТУТ
-TOKEN = '8751226762:AAG0h7nFQHfs1FKt6k8hK4fxyrF2CyQiyYU'
+# Railway підтягне токен з Variables
+API_TOKEN = os.getenv("BOT_TOKEN")
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
 
-# Словник твоїх голосових: ID файлу та заголовок
-VOICES = [
-    {"id": "1", "file_id": "AwACAgIAAxkBAAMFaesou7exlEXsdZu0XLcJprde-_IAAp4FAAIGrSlIF8XC58oX28U7BA", "title": "Вкрали брілки"},
-    {"id": "2", "file_id": "AwACAgIAAxkBAAMHaeso1CDabXc2Uiqs0p8kNeGhBoEAAhYHAAKJSWFKcLZu2p014e47BA", "title": "Антон набухався"},
-    {"id": "3", "file_id": "AwACAgIAAxkBAAMJaeso3Lz5wr_uMPrU4ssEIL6kFf4AAqkFAALaM4hKyj751T-i3Xw7BA", "title": "де я"},
-    {"id": "4", "file_id": "AwACAgIAAxkBAAMLaeso6ZNTNvVfgmJ54wv_OFX5csIAAh4KAAJg9ShLWnH3OcIAAf-LOwQ", "title": "Меклеш"},
-    {"id": "5", "file_id": "AwACAgIAAxkBAAMNaespCtZUjh4eF7j-o0YWepaNj6sAAkIJAAIQ3ZhJAiMQ5cjjN8A7BA", "title": "Діма на пізда"},
-    {"id": "6", "file_id": "AwACAgIAAxkBAAMPaespG_E1X9LIwNCYcoqDTVqN45sAAkUJAAIQ3ZhJpVII0FP5hRc7BA", "title": "Діма тут така срака"},
-    {"id": "7", "file_id": "AwACAgIAAxkBAAMRaespJ6_pj9OrgEe3fkbUJQcssMAAAgUHAAKJSWFKx0HP2AdoI1o7BA", "title": "Антон прийшов чи нє"},
-    {"id": "8", "file_id": "AwACAgIAAxkBAAMTaespMafhRZ0bhnXwGt13t9XjJdQAAhoHAAKJSWFKRplM3SRq5f47BA", "title": "Я п'яний в щі"},
-    {"id": "9", "file_id": "AwACAgIAAxkBAAMVaespQzXQ8vWM9bbx_P2m106kVyIAAmMGAAL9l7hLz9BsJt4s6MY7BA", "title": "Шева тут пізда"},
-]
-
-# Обробник Inline-запитів
-@dp.inline_query()
-async def inline_voice_handler(inline_query: InlineQuery):
-    results = []
+# Цей блок коду буде надсилати тобі ID, коли ти кидаєш боту голосове або файл
+@dp.message_handler(content_types=['voice', 'audio', 'document'])
+async def get_file_id(message: types.Message):
+    file_id = None
+    if message.voice:
+        file_id = message.voice.file_id
+    elif message.audio:
+        file_id = message.audio.file_id
     
-    for voice in VOICES:
-        results.append(
-            InlineQueryResultCachedVoice(
-                id=voice["id"],
-                voice_file_id=voice["file_id"],
-                title=voice["title"]
-            )
-        )
-    
-    # Відправляємо результати (максимум 50 за раз за правилами Telegram)
-    await inline_query.answer(results, cache_time=1)
+    if file_id:
+        await message.reply(f"Ось ID твого файлу:\n`{file_id}`", parse_mode="Markdown")
 
-async def main():
-    print("Бот запущений у Inline-режимі! Можна тестувати в чатах.")
-    await dp.start_polling(bot)
+# Твоє Inline-меню (додавай нові ID сюди)
+@dp.inline_handler()
+async def inline_echo(inline_query: InlineQuery):
+    results = [
+        # ПЕРШЕ ГОЛОСОВЕ
+        InlineQueryResultVoice(
+            id='1',
+            voice_file_id='AwACAgIAAxkBAAMTae...', # Встав старий ID сюди
+            title='Назва 1'
+        ),
+        # ДРУГЕ ГОЛОСОВЕ (від Єгора)
+        InlineQueryResultVoice(
+            id='2',
+            voice_file_id='AwACAgIAAxkBAAMVae...', # Встав ID Єгора зі скриншоту сюди
+            title='Від Єгора'
+        ),
+    ]
+    await bot.answer_inline_query(inline_query.id, results=results, cache_time=1)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    executor.start_polling(dp, skip_updates=True)
