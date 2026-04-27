@@ -1,45 +1,58 @@
-
+import asyncio
 import os
-from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
-from aiogram.types import InlineQuery, InlineQueryResultVoice
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.types import InlineQuery, InlineQueryResultCachedVoice
 
-# Railway підтягне токен з Variables
-API_TOKEN = os.getenv("BOT_TOKEN")
+# Краще використовувати змінні оточення для безпеки, але залишаю твій варіант для зручності
+TOKEN = os.getenv("BOT_TOKEN") or '8751226762:AAG0h7nFQHfs1FKt6k8hK4fxyrF2CyQiyYU'
 
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
 
-# Цей блок коду буде надсилати тобі ID, коли ти кидаєш боту голосове або файл
-@dp.message_handler(content_types=['voice', 'audio', 'document'])
-async def get_file_id(message: types.Message):
-    file_id = None
-    if message.voice:
-        file_id = message.voice.file_id
-    elif message.audio:
-        file_id = message.audio.file_id
+# Словник твоїх голосових: ID файлу та заголовок
+VOICES = [
+    {"id": "1", "file_id": "AwACAgIAAxkBAAMFaesou7exlEXsdZu0XLcJprde-_IAAp4FAAIGrSlIF8XC58oX28U7BA", "title": "Вкрали брілки"},
+    {"id": "2", "file_id": "AwACAgIAAxkBAAMHaeso1CDabXc2Uiqs0p8kNeGhBoEAAhYHAAKJSWFKcLZu2p014e47BA", "title": "Антон набухався"},
+    {"id": "3", "file_id": "AwACAgIAAxkBAAMJaeso3Lz5wr_uMPrU4ssEIL6kFf4AAqkFAALaM4hKyj751T-i3Xw7BA", "title": "де я"},
+    {"id": "4", "file_id": "AwACAgIAAxkBAAMLaeso6ZNTNvVfgmJ54wv_OFX5csIAAh4KAAJg9ShLWnH3OcIAAf-LOwQ", "title": "Меклеш"},
+    {"id": "5", "file_id": "AwACAgIAAxkBAAMNaespCtZUjh4eF7j-o0YWepaNj6sAAkIJAAIQ3ZhJAiMQ5cjjN8A7BA", "title": "Діма на пізда"},
+    {"id": "6", "file_id": "AwACAgIAAxkBAAMPaespG_E1X9LIwNCYcoqDTVqN45sAAkUJAAIQ3ZhJpVII0FP5hRc7BA", "title": "Діма тут така срака"},
+    {"id": "7", "file_id": "AwACAgIAAxkBAAMRaespJ6_pj9OrgEe3fkbUJQcssMAAAgUHAAKJSWFKx0HP2AdoI1o7BA", "title": "Антон прийшов чи нє"},
+    {"id": "8", "file_id": "AwACAgIAAxkBAAMTaespMafhRZ0bhnXwGt13t9XjJdQAAhoHAAKJSWFKRplM3SRq5f47BA", "title": "Я п'яний в щі"},
+    {"id": "9", "file_id": "AwACAgIAAxkBAAMVaespQzXQ8vWM9bbx_P2m106kVyIAAmMGAAL9l7hLz9BsJt4s6MY7BA", "title": "Шева тут пізда"},
+]
+
+# --- НОВИЙ БЛОК: СЛУХАЄМО НОВІ ГОЛОСОВІ ---
+@dp.message(F.voice | F.audio)
+async def handle_new_audio(message: types.Message):
+    file_id = message.voice.file_id if message.voice else message.audio.file_id
+    next_id = len(VOICES) + 1
     
-    if file_id:
-        await message.reply(f"Ось ID твого файлу:\n`{file_id}`", parse_mode="Markdown")
+    # Формуємо текст, який зручно скопіювати в код
+    response_text = (
+        f"✅ **Отримано нове аудіо!**\n\n"
+        f"Скопіюй цей рядок і додай у список VOICES:\n\n"
+        f"`{{\"id\": \"{next_id}\", \"file_id\": \"{file_id}\", \"title\": \"НОВА_НАЗВА\"}},`"
+    )
+    await message.reply(response_text, parse_mode="Markdown")
 
-# Твоє Inline-меню (додавай нові ID сюди)
-@dp.inline_handler()
-async def inline_echo(inline_query: InlineQuery):
-    results = [
-        # ПЕРШЕ ГОЛОСОВЕ
-        InlineQueryResultVoice(
-            id='1',
-            voice_file_id='AwACAgIAAxkBAAMTae...', # Встав старий ID сюди
-            title='Назва 1'
-        ),
-        # ДРУГЕ ГОЛОСОВЕ (від Єгора)
-        InlineQueryResultVoice(
-            id='2',
-            voice_file_id='AwACAgIAAxkBAAMVae...', # Встав ID Єгора зі скриншоту сюди
-            title='Від Єгора'
-        ),
-    ]
-    await bot.answer_inline_query(inline_query.id, results=results, cache_time=1)
+# Обробник Inline-запитів
+@dp.inline_query()
+async def inline_voice_handler(inline_query: InlineQuery):
+    results = []
+    for voice in VOICES:
+        results.append(
+            InlineQueryResultCachedVoice(
+                id=voice["id"],
+                voice_file_id=voice["file_id"],
+                title=voice["title"]
+            )
+        )
+    await inline_query.answer(results, cache_time=1)
+
+async def main():
+    print("Бот запущений! Надсилайте голосові в чат для отримання ID.")
+    await dp.start_polling(bot)
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    asyncio.run(main())
