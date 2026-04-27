@@ -3,13 +3,14 @@ import os
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.types import InlineQuery, InlineQueryResultCachedVoice
 
-# Краще використовувати змінні оточення для безпеки, але залишаю твій варіант для зручності
+# Беремо токен з Variables на Railway або використовуємо твій поточний
 TOKEN = os.getenv("BOT_TOKEN") or '8751226762:AAG0h7nFQHfs1FKt6k8hK4fxyrF2CyQiyYU'
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 # Словник твоїх голосових: ID файлу та заголовок
+# Увага: кожен id має бути унікальним рядком!
 VOICES = [
     {"id": "1", "file_id": "AwACAgIAAxkBAAMFaesou7exlEXsdZu0XLcJprde-_IAAp4FAAIGrSlIF8XC58oX28U7BA", "title": "Вкрали брілки"},
     {"id": "2", "file_id": "AwACAgIAAxkBAAMHaeso1CDabXc2Uiqs0p8kNeGhBoEAAhYHAAKJSWFKcLZu2p014e47BA", "title": "Антон набухався"},
@@ -27,40 +28,42 @@ VOICES = [
     {"id": "14", "file_id": "AwACAgIAAxkBAAMiae9Fug39a6jQiVqA8bbN2PDsHYoAAtgDAAJPHNhIMz1-S0pO6cA7BA", "title": "Забув як ти водку жрав"},
     {"id": "15", "file_id": "AwACAgIAAxkBAAMkae9F3r0QDMjbMdwK_rxczIzstDEAAqgDAALsjZhJpPUDYqXwlFU7BA", "title": "Вадім підар"},
     {"id": "16", "file_id": "AwACAgIAAxkBAAMmae9F_lJY9PaG-dVkHBkoL_WVfP4AAvICAALlJ_hLZeV9bxEtzoI7BA", "title": "Пососи грєбєнь"},
-    {"id": "10", "file_id": "AwACAgIAAxkBAAMoae9GZMoehSj0Z6F3qfAMfPpDSDoAAjMCAALaPAhJccr1IjGxWaI7BA", "title": "Пачка сігарєт"},
-    
+    {"id": "17", "file_id": "AwACAgIAAxkBAAMoae9GZMoehSj0Z6F3qfAMfPpDSDoAAjMCAALaPAhJccr1IjGxWaI7BA", "title": "Пачка сігарєт"},
 ]
 
-# --- НОВИЙ БЛОК: СЛУХАЄМО НОВІ ГОЛОСОВІ ---
-@dp.message(F.voice | F.audio)
+# --- СЛУХАЄМО НОВІ ГОЛОСОВІ (Тільки в особистих повідомленнях) ---
+@dp.message((F.voice | F.audio) & (F.chat.type == "private"))
 async def handle_new_audio(message: types.Message):
     file_id = message.voice.file_id if message.voice else message.audio.file_id
     next_id = len(VOICES) + 1
     
-    # Формуємо текст, який зручно скопіювати в код
     response_text = (
         f"✅ **Отримано нове аудіо!**\n\n"
-        f"Скопіюй цей рядок і додай у список VOICES:\n\n"
+        f"Скопіюй цей рядок і додай у список VOICES на GitHub:\n\n"
         f"`{{\"id\": \"{next_id}\", \"file_id\": \"{file_id}\", \"title\": \"НОВА_НАЗВА\"}},`"
     )
     await message.reply(response_text, parse_mode="Markdown")
 
-# Обробник Inline-запитів
+# --- ОБРОБНИК INLINE-ЗАПИТІВ ---
 @dp.inline_query()
 async def inline_voice_handler(inline_query: InlineQuery):
     results = []
-    for voice in VOICES:
-        results.append(
-            InlineQueryResultCachedVoice(
-                id=voice["id"],
-                voice_file_id=voice["file_id"],
-                title=voice["title"]
+    try:
+        for voice in VOICES:
+            results.append(
+                InlineQueryResultCachedVoice(
+                    id=voice["id"],
+                    voice_file_id=voice["file_id"],
+                    title=voice["title"]
+                )
             )
-        )
-    await inline_query.answer(results, cache_time=1)
+        # Відправляємо результати (cache_time=1 дозволяє швидше бачити оновлення)
+        await inline_query.answer(results, cache_time=1)
+    except Exception as e:
+        print(f"Помилка Inline: {e}")
 
 async def main():
-    print("Бот запущений! Надсилайте голосові в чат для отримання ID.")
+    print("Бот запущений! Для отримання ID пишіть йому в особисті повідомлення.")
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
