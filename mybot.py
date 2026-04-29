@@ -29,6 +29,7 @@ VOICES = [
     {"id": "15", "file_id": "AwACAgIAAxkBAAMkae9F3r0QDMjbMdwK_rxczIzstDEAAqgDAALsjZhJpPUDYqXwlFU7BA", "title": "Вадім підар"},
     {"id": "16", "file_id": "AwACAgIAAxkBAAMmae9F_lJY9PaG-dVkHBkoL_WVfP4AAvICAALlJ_hLZeV9bxEtzoI7BA", "title": "Пососи грєбєнь"},
     {"id": "17", "file_id": "AwACAgIAAxkBAAMoae9GZMoehSj0Z6F3qfAMfPpDSDoAAjMCAALaPAhJccr1IjGxWaI7BA", "title": "Пачка сігарєт"},
+    {"id": "18", "file_id": "AwACAgIAAxkBAAMqafGp1KPtDTHWDMxfUf6r3Bhj7hoAAmeVAALT1IlLspXugLzMfPo7BA", "title": "Антооон"},
 ]
 
 # --- СЛУХАЄМО НОВІ ГОЛОСОВІ (Тільки в особистих повідомленнях) ---
